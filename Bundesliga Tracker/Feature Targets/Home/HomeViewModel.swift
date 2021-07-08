@@ -11,7 +11,10 @@ final class HomeViewModel: ObservableObject {
     @Published var search = 5
     @Published var matches: [Match] = []
     
+    @Published var done = false
+    
     func load(day: Int) {
+        done = false
         async {
             do {
                 let matches = try await APIService
@@ -19,6 +22,7 @@ final class HomeViewModel: ObservableObject {
                 
                 DispatchQueue.main.async {
                     self.matches = matches
+                    self.done = true
                 }
             } catch {
                 print(error)

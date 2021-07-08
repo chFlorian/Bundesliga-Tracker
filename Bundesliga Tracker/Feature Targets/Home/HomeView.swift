@@ -4,75 +4,75 @@
 //
 //  Created by florian schweizer on 02.07.21.
 //
+// <div>Icons made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 
 import SwiftUI
 
 struct HomeView: View {
     @StateObject private var model = HomeViewModel()
+    @State var animated = false
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                HStack(spacing: 16) {
-                    TextField("Gameday", value: $model.search, formatter: NumberFormatter())
-                        .textFieldStyle(.roundedBorder)
-                    Button {
-                        model.load(day: model.search)
-                    } label: {
-                        Image(systemName: "magnifyingglass")
+            ZStack {
+                List {
+                    HStack(spacing: 16) {
+                        TextField("Gameday", value: $model.search, formatter: NumberFormatter())
+                            .textFieldStyle(.roundedBorder)
+                        Button {
+                            model.load(day: model.search)
+                        } label: {
+                            Image(systemName: "magnifyingglass")
+                        }
+                    }
+                    .padding(.vertical)
+                    .listRowSeparator(.hidden, edges: .top)
+                    
+                    ForEach(model.matches, id:\.matchID) { match in
+                        NavigationLink(destination: MatchDetailView(match: match)) {
+                            MatchPreviewView(match: match)
+                        }
                     }
                 }
-                .padding()
-                
-                ForEach(model.matches, id:\.matchID) { match in
-                    VStack(spacing: 16) {
-                        if !match.team1.teamIconURL.isEmpty && !match.team2.teamIconURL.isEmpty {
-                            HStack {
-                                AsyncImage(url: URL(string: match.team1.teamIconURL)) { image in
-                                    image.resizable()
-                                        .scaledToFit()
-                                        .frame(width: 100, height: 100)
-                                } placeholder: {
-                                    Image(systemName: "xmark")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 100, height: 100)
-                                }
-                                
-                                AsyncImage(url: URL(string: match.team2.teamIconURL)) { image in
-                                    image.resizable()
-                                        .scaledToFit()
-                                        .frame(width: 100, height: 100)
-                                } placeholder: {
-                                    Image(systemName: "xmark")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 100, height: 100)
-                                }
-                            }
-                        }
-                        
-                        HStack {
-                            Text(match.team1.teamName)
-                            Text("vs.")
-                            Text(match.team2.teamName)
-                        }
-                        .font(.subheadline)
-                        HStack {
-                            Text("\(match.goals.last?.scoreTeam1 ?? 0)")
-                            Text(":")
-                            Text("\(match.goals.last?.scoreTeam2 ?? 0)")
-                        }
-                        .font(.title2.bold())
-                    }
-                    .frame(maxWidth: .infinity)
-                }
+                .listStyle(.inset)
                 .navigationTitle("1. Bundesliga")
-            }
-            .task {
-                model.load(day: 8)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Image("bundesliga")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
+                    }
+                }
+                .task {
+                    withAnimation {
+                        animated = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        model.load(day: 8)
+                    }
+                }
+                
+                if !model.done {
+                    animatedBall
+                }
             }
         }
+    }
+    
+    private var animatedBall: some View {
+        Capsule()
+            .frame(width: animated ? 40 : 80, height: 16)
+            .animation(.linear(duration: 0.4).repeatForever(), value: animated)
+            .opacity(0.1)
+            .overlay(
+                Image("soccer-ball")
+                    .resizable()
+                    .frame(width: 100, height: 100)
+                    .rotationEffect(.degrees(animated ? 360 : 0))
+                    .offset(x: 0, y: animated ? -150 : -50)
+                    .animation(.linear(duration: 0.4).repeatForever(), value: animated)
+            )
     }
 }
 
